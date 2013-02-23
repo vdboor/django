@@ -441,6 +441,19 @@ class Templates(TestCase):
         output1 = template.render(Context({'foo': range(3), 'get_value': lambda: next(gen1)}))
         self.assertEqual(output1, '[0,1,2,3]', 'Expected [0,1,2,3] in first template, got {0}'.format(output1))
 
+    def test_ifchanged_render_once(self):
+        # Tests for #19890
+        # The ifchanged tag rendered the contents multiple times.
+        # The generator reveals whether 1,2,3 or 1,3,5 is rendered.
+        template = Template('[0{% for x in foo %},{% ifchanged %}{{ get_value }}{% endifchanged %}{% endfor %}]')
+        def gen():
+            for i in xrange(1,10):
+                yield i
+
+        gen = gen()
+        output = template.render(Context({'foo': range(3), 'get_value': lambda: next(gen)}))
+        self.assertEqual(output, '[0,1,2,3]')
+
     def test_templates(self):
         template_tests = self.get_template_tests()
         filter_tests = filters.get_filter_tests()
